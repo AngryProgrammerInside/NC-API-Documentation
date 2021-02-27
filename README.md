@@ -1,14 +1,18 @@
 # How To: N-Central API Automation
 
 ## Table of Contents
+- [How To: N-Central API Automation](#how-to--n-central-api-automation)
+  * [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Connecting](#connecting)
   * [PS-NCentral](#ps-ncentral)
+    + [Multiple PS-NCentral server connections](#multiple-ps-ncentral-server-connections)
   * [PowerShell WebserviceProxy](#powershell-webserviceproxy)
 - [Performing Queries](#performing-queries)
   * [PS-NCentral](#ps-ncentral-1)
+    + [Advanced querying](#advanced-querying)
   * [PowerShell WebserviceProxy](#powershell-webserviceproxy-1)
-- [Bind to the namespace, using the Webserviceproxy](#bind-to-the-namespace--using-the-webserviceproxy)
+    + [Bind to the namespace, using the Webserviceproxy](#bind-to-the-namespace--using-the-webserviceproxy)
 - [Updating a Value](#updating-a-value)
   * [PS-NCentral](#ps-ncentral-2)
   * [PowerShell WebserviceProxy](#powershell-webserviceproxy-2)
@@ -17,9 +21,11 @@
     + [Update customer property](#update-customer-property)
     + [Add new a new Customer](#add-new-a-new-customer)
 - [Appendix A – N-Central Web Service members](#appendix-a---n-central-web-service-members)
-- [Appendix B PS-NCentral cmdlets](#appendix-b-ps-ncentral-cmdlets)
+- [Appendix - B PS-NCentral cmdlets](#appendix---b-ps-ncentral-cmdlets)
 - [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
 - [Appendix D – Customer Property variables](#appendix-d---customer-property-variables)
+- [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
+- [Credits](#credits)
 
 # Overview
 
@@ -28,6 +34,8 @@ N-Central's API is a flexible, programmatic, object oriented, Java based interfa
 For the purposes of this guide we'll be covering connectivity and basic usage with PowerShell based automation through the PS-NCentral module, as well as native WebserviceProxy cmdlet.
 
 The information covering the PS-NCentral is useful for those with starting some experience with PowerShell or need to quickly put together code where module dependency isn't an issue, while the usage of the WebserviceProxy method is for those more familiar with object oriented coding or need code portatability.
+
+At time of writing version 1.2 is in beta release, and we'll cover some of the nuances of that version. The main advantage of version 1.2 is making it PowerShell 7 for cross compatability to be able to run Windows/Linux or in an Azure function.
 
 PS-NCentral provides cmdlets for 17 Get cmdlets and 3 Set cmdlets that cover the majority, so should cover the majority of automation. This can be downloaded from: [https://github.com/ToschAutomatisering/PS-NCentral](https://github.com/ToschAutomatisering/PS-NCentral)
 
@@ -39,23 +47,20 @@ Install-Module PS-NCentral
 
 # Connecting
 
-The first step required before connecting is to create a new automation account with appropriate permissions.
+The first step required before connecting is to create a new automation account with appropriate role permissions. With N-Central 2020 or 12.3 HF4 and later you must disable the MFA requirement for the account so use a long and complex password.
 
-With N-Central 2020 or 12.3 HF4 and later you must disable the MFA requirement for the account so use a long and complex password.
-
-Once the account is created, select the API Authentication tab and click on the ' **Generate JSON Web Token**' button, otherwise referred to JSON Web Token **(JWT)** save this token somewhere secure, if you lose your JWT, you can generate another one at any time.
-
-This token will be used for the authentication to the server.
+Once the account is created, select the API Authentication tab and click on the ' **Generate JSON Web Token**' button, save this **JWT** token somewhere secure, if you lose your JWT, you can generate another one at any time, but it will invalidate the previous one. If you update/change role permissions for the account automation account you will need to regenerate the token, as the asserted permissions are in the JWT.
 
 ## PS-NCentral
 
 Connecting to your N-Central service with PS-NCentral only needs to be done once per session. Your first require the following information:
 
-- The fqdn of your N-Central server, ie: n-central.myserver.com
-- The account name you created above, ie. ncentral\_automation@myserver.com
+- The fqdn of your N-Central server, ie: `n-central.mydomain.com`
 - The JWT from above
 
 Then enter the following:
+
+**Version 1.1**
 ```powershell
 #Import the PS-NCentral module
 import-module .\PS-NCentral.psm1 -Verbose
@@ -67,19 +72,50 @@ $credential = New-Object System.Management.Automation.PSCredential ("ACCOUNT NAM
 #Connect to NC
 New-NCentralConnection -ServerFQDN YOUR SERVER FQDN -PSCredential $credential
 ```
+**Version 1.2**
+
+```powershell
+#Import the PS-NCentral module
+import-module .\PS-NCentral.psm1 -Verbose
+
+#Connect to NC
+New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -JWT "YOUR JWT STRING"
+```
 
 If successful you will get an output similar to the below:
 
 |Property | Value|
 |--------|-----|
 | Error | |
-| ConnectionURL | n-central.myserver.com|
-| BindingURL | https://n-central.myserver.com/dms2/services2/ServerEI2?wsdl |
+| ConnectionURL | `n-central.mydomain.com`|
+| BindingURL | `https://n-central.mydomain.com/dms2/services2/ServerEI2?`wsdl |
 | IsConnected | True |
 | NCVersion | |
 | tCreds | |
 | DefaultCustomerID | 50 |
 | CustomerValidation | {zip/postalcode, street1, street2, city...} |
+
+### Multiple PS-NCentral server connections
+
+If you are an MSP with multiple N-Central servers, or have an NFC server for testing you can leverage the **-NCSession** parameter available on PS-NCentral cmdlets to quickly call other servers, this is available in all versions of PS-NCentral, but we'll use 1.2 as the example for brevity.
+
+Then enter the following:
+```powershell
+#Connect to NC
+$Connection1 = New-NCentralConnection "$NCentralFQDN1" -JWT "$JWT1"
+$Connection2 = New-NCentralConnection "$NCentralFQDN2" -JWT "$JWT2"
+
+#Get the customer list from each server for later processing
+$NC1Customers = Get-NCCustomerList -NcSession $Connection1
+$NC2Customers = Get-NCCustomerList -NcSession $Connection2
+```
+
+Another useful pameter when connecting is the **DefaultCustomerID**, this sets the default scope for when calling cmdlets such as Get-NCDeviceList, so if I were to perform the following connection and function call it would only give me all devices associated with CustomerID 333
+
+``` powershell
+New-NCentralConnection "$NCentralFQDN" -JWT "$JWT1" -DefaultCustomerID 333
+$Customer333Devices = Get-NCDeviceList
+```
 
 ## PowerShell WebserviceProxy
 
@@ -91,14 +127,13 @@ The main differences between the v1 and v2 endpoints are:
 - Different classes, including the KeyPair constructor class used for adding custom settings for queries and update/change methods
 - V2 has all the newer methods available
 
-It will be necessary to review the Javadocs provided on your server for the lastest information on the classes and constructors, you can find them under your own N-Central server under https://\&lt;fqdn\_of\_server\&gt;/dms.
+It will be necessary to review the Javadocs provided on your server for the lastest information on the classes and constructors, you can find them under your own N-Central server under `https://n-central.mydomain.com/dms/`
 
 If reviewing other WebserviceProxy powershell code on the internet, you can identify v1/legacy code as it will have the following in the binding URL string: /dms/services/ServerEI?wsdl while v2 has /dms2/services2/ServerEI2?wsdl
 
 For connecting to webservice you will need the same information as with the PS-NCentral which connects in the same way underneath:
 
 - The fqdn of your N-Central server, ie: n-central.myserver.com
-- The account name you created above, ie. powershell_automation@myserver.com
 - The JWT for the account
 
 With our examples we'll use v2 connections and classes, below is a common method seen in examples:
@@ -128,14 +163,16 @@ From this you will see a lot of | Event |s, Methods and Properties ie.
 | BeginaccessGroupAdd | Method |
 | BeginaccessGroupGet | Method |
 
-The above output has been shortened, see Appendix A – N-Central Web Service members for the complete output. In addition you will have a **Definition** column, and you will observe that your ```$NWSNameSpace``` is seen prefixed to the methods/classes noted in them. All classes/methods/constructors available in the Javadocs can be created and called upon through the ```$nws``` variable. Eg. The customerListmethod would be called with
+
+The above output has been shortened, see [Appendix A – N-Central Web Service members](#appendix-a---n-central-web-service-members) members for the complete output. In addition you will have a **Definition** column, and you will observe that your `$NWSNameSpace` is seen prefixed to the methods/classes noted in them. All classes/methods/constructors available in the Javadocs can be created and called upon through the `$nws` variable. Eg. The customerListmethod would be called with
 
 ```powershell
-$nws.customerList("", $password, $settings)
+$nws.customerList("", $JWT, $settings)
 ```
-As you will note when connecting with the $nws variable, at no point did you use your username or JWT, as you will observe in the $nws.customerListmethod called above, the $usernameand $password is used in every get or set.
 
-Underneath the PS-NCentral saves these variables and re-uses each time a cmdlet is used.
+As you will note when connecting with the `$nws` variable, at no point did you use your username or JWT, as you will observe in the `$nws.customerList` method called above, the  $JWT is used in every get or set, and the username is simply `""` as the username is inside of the JWT string.
+
+Underneath the PS-NCentral module it saves these variables and re-uses each time a cmdlet is used.
 
 # Performing Queries
 
@@ -160,7 +197,6 @@ $CustomerList = Get-NCCustomerList
 $CustomerPropertyList = Get-NCCustomerPropertyList
 
 #Create array list for table
-
 $CustomerReport = New-Object System.Collections.ArrayList
 
 #Merge
@@ -181,6 +217,24 @@ $CustomerReport | Out-GridView
 
 The important parts of this example are the simple one line calls for the **New-CentralConnection** , **Get-NCCsutomerList** and **Get-NCCustomerPropertyList**. With very little effort we can connect, retrieve the data then process into a single table for review.
 
+### Advanced PS-NCentral querying
+The PS-NCentral module provides ease of access to N-Central API calls with normal **verb-noun** functions, but you can also perform a direct call through the internal connection class, we could replace the above function calls with these methods:
+
+```powershell
+# Connect to NC
+$NCSession = New-NCentralConnection -ServerFQDN n-central.myserver.com -PSCredential $credential
+
+# Grab the customer list/details
+$CustomerList = $NCSession.CustomerList()
+
+# Get the customer properties
+$CustomerPropertyList = $NCSession.OrganizationPropertyList()
+```
+
+We can get the list of all the underlying class connection methods by enumerating the members with `$NCSession | Get-Member  -MemberType Method` to see all 'inside' methods. Most methods have 'Overloads'. These are selected based on the parameter-pattern eg. `([String], [String])` or `([String],[Int])`.
+
+For a list of all methods see [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
+
 ## PowerShell WebserviceProxy
 
 In this section we'll perform the same example as above but using the native cmdlets we'll go through an example of a fully functioning cmdlet that uses native cmdlet calls.
@@ -200,28 +254,25 @@ We'll then connect using a static namespace, you can equally use the pseudo-uniq
 
 ```powershell
 $NWSNameSpace = "NAbleAPI"
-$KeyPairType = $NWSNameSpace.eiKeyValue
 ```
 
-# Bind to the namespace, using the Webserviceproxy
+### Bind to the namespace, using the Webserviceproxy
 ```powershell
 $bindingURL = "https://" + $serverHost + "/dms2/services2/ServerEI2?wsdl"
 $nws = New-Webserviceproxy $bindingURL -Namespace ($NWSNameSpace)
 ```
-Using a static namespace can be useful if you prefer to call the class based constructor rather than the New-Object cmdlet . Ie. when using the constructor for the EiKeyValue that is commonly required for queries.
+For many API calls a list of settings are required, in the case of the `CustomerList()` method we need to specify if the service organisation should be listed or not. The JavaDocs specify you have to use the `EiKeyValue` KeyPair type or array of `EiKeyValuesList` per the Javadocs, but it is simpler to create an ArrayList and add a generic hashtable Key/Pair that will be automatically cast to the `EiKeyValue`.
+
 ```powershell
-$KeyPairType = $NWSNameSpace.eiKeyValue
-$KeyPair = New-Object -TypeName $KeyPairType
-You can instead call
-$KeyPair = [NAbleAPI.eiKeyValue]::new()
+$settings = New-Object System.Collections.ArrayList
+$settings.Add(@{key = "listSOs"; value = "True" })
 ```
-Both methods achieve the construction of the eiKeyValue instance, but one can be used where there is a syntactic preference for C#/classic programming rather than cmdlets.
 
 Next we wrap the steps of retrieving the Customer List and Organisation properties list with a try/catch block that exits if there is an error with retrieving the data.
 ```powershell
 #Attempt to connect
 Try {
-    $CustomerList = $nws.customerList("", $JWT, $KeyPair)
+    $CustomerList = $nws.customerList("", $JWT, $Settings)
     $OrgPropertiesList = $nws.organizationPropertyList("", $JWT, $null, $false)
 }
 
@@ -239,7 +290,6 @@ foreach ($Org in $OrgPropertiesList) {
     $CustomerOrgProps = @{}
     foreach ($p in $Org.properties) { $CustomerOrgProps[$p.label] = $p.value }
     $OrgPropertiesHashTable[$Org.customerId] = $CustomerOrgProps
-
 }
 ```
 
@@ -278,34 +328,37 @@ ForEach ($Entity in $CustomerList) {
 $CustomersReport | Out-GridView
 ```
 
-For the complete script see **Appendix C – GetAllCustomerProperties.ps1**
+For the complete script see [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
 
 # Updating a Value
 
 A common case for updating a value would be automating the update/change of Organisation or Device properties. Examples of Organisation properties could be: tokens/keys for MSP applications deployed to devices, the customer name to pass through to a script for output or the N-Central API registration token for installation of the agent. Updating these properties is straightforward with either the web proxy or PS-NCentral cmdlets.
 
-Please note at time of writing the only way for a Registration Token to be generated is through the UI, requiring an administrator to navigate to every _customer_ and every _site_ and click on the **Get Registration Token button** under **Download Agent/Probe** ; this will hopefully change in future. Plan your token expiration period around this.
+At time of writing the normal way for a Registration Token to be generated is through the UI, requiring an administrator to navigate to every _customer_ and every _site_ and click on the **Get Registration Token button** under **Download Agent/Probe** ; this will be changed in future.
+
+If you do need to perform mass registration token updating/refreshing there is an AMP provided as a part of the InstallAgent 6 suite that has a workaround and can be found at [https://github.com/AngryProgrammerInside/InstallAgent/tree/master/AMPs](https://github.com/AngryProgrammerInside/InstallAgent/tree/master/AMPs)
 
 ## PS-NCentral
 
 In the example for PS-NCentral we'll take the Customer name from the Get-NCCustomerList and inject it into _custom_ property called  **Agent – Registration Token**, this is useful if we need to programmatically inject token information into files or registry settings for later use. We'll assume we already have a connection to N-Central:
+
 ```powershell
 $CustomerList = Get-NCCustomerList
 foreach ($Customer in $CustomerList){
-    Set-NCCustomerProperty -CustomerIDs $Customer.customerid -PropertyLabel Agent - RegistrationToken -PropertyValue $Customer.registrationtoken
+    Set-NCCustomerProperty -CustomerIDs $Customer.customerid -PropertyLabel "Agent - RegistrationToken" -PropertyValue $Customer.registrationtoken
 }
 ```
 
 Or if we wanted to take the customer's name and inject it into a custom property like  **Reporting – Customer Name** to inject it into an AMP's output for easier to identify the device AMPs run across a service organization:
+
 ```powershell
 $CustomerList = Get-NCCustomerList
 
 foreach ($Customer in $CustomerList){
-    Set-NCCustomerProperty -CustomerIDs $Customer.customerid -PropertyLabel Reporting – Customer Name -PropertyValue $Customer.customername
-
+    Set-NCCustomerProperty -CustomerIDs $Customer.customerid -PropertyLabel "Reporting – Customer Name" -PropertyValue $Customer.customername
 }
 ```
-Another advantage of the Set-NCCustomerProperty cmdlet is that it can distinguish between the default _customer_ properties, ie. zip/postalcode, street1, externalid, externalid2 and will use the appropriate method to update that. You can find the list of key names in the Java Docs, or refer to **Appendix D – Customer Property variables**.
+An advantage of the Set-NCCustomerProperty cmdlet is that it can distinguish between the default _customer_ properties, ie. zip/postalcode, street1, externalid, externalid2 and will use the appropriate method to update that. You can find the list of key names in the Java Docs, or refer to **Appendix D – Customer Property variables**.
 
 For our example, you may have a PSA or perhaps a spreadsheet, and we want to refresh the information from that data source into _customer_ properties. In our example we'll use a spreadsheet/CSV as our datasource, and assume we have already matched the CustomerID with the company name and we have a dataset as below:
 
@@ -317,6 +370,7 @@ For our example, you may have a PSA or perhaps a spreadsheet, and we want to ref
 | 4 | Michael | Mills | Mmills@engineer.com |
 | 5 | Anthony | Jackson | 008Jac@mail.com |
 
+\
 You could then update the respective values in N-Central
 ```powershell
 $custData = Import-CSV C:\Temp\customerData.csv
@@ -332,13 +386,52 @@ foreach ($Customer in $custData){
 }
 ```
 
+Another advantage of PS-NCentral is that you can easily pipeline information through and set it as a customer property, in the first example we will update the **Reporting - Customer Name** again except this time utilising the pipe:
+```powershell
+Get-NCCustomerList | Set-NCCustomerProperty -PropertyLabel 'Reporting – Customer Name' -PropertyValue $_.customername
+```
+
+In the second example we may have a custom table from a CSV or other source that has the following properties and values:
+
+| **customerid** | **CustomerSLA** | 
+| --- | --- | 
+| 123 | 1H | 
+| 124 | 4H | 
+| 221 | 8H | 
+| 233 | 8H | 
+| 321 | 8H | 
+
+\
+We then have this table in a variable `$CustomerPropers` and use it to populate a custom property called **'Reporting - Customer SLA'**
+```powershell
+Get-NCCustomerList |
+Select-Object customerid, @{n="CustomerSLA"; e={$CustomerID = $_.customerid; (@($CustomerProps).where({ $_.customerID -eq $CustomerID })).CustomerSLA}} `
+| Where-Object {$_.CustomerSLA} `
+| % { Set-NCCustomerProperty -CustomerIDs $_.CustomerID -PropertyLabel 'Reporting – Customer SLA' -PropertyValue $_.CustomerSLA }
+```
+Another example would be where we may want to populate a Custom Device Property, in this case **'External ID'** based upon the CustomerID using in a customer table `$Customers`
+| **customerid** | **ExternalID** | 
+| --- | --- | 
+| 123 | 78409377 | 
+| 124 | 78405890 | 
+| 221 | 78404905 | 
+| 233 | 78402984 | 
+| 321 | 38940384 | 
+
+```powershell
+Get-NCDeviceList | `
+Select-Object DeviceID, `
+@{n="ExternalID"; e={$CustomerID = $_.customerid; (@($Customers).where({ $_.customerID -eq $CustomerID })).AzureAD}} | `
+Where-Object {$_.ExternalID} | %{Set-NCDeviceProperty -DeviceIDs $_.DeviceID -PropertyLabel 'ExternalID' -PropertyValue $_.ExternalID}
+```
+
 ## PowerShell WebserviceProxy
 
 Updating customer properties and without the PS-NCentral cmdlets can take several additional steps as PS-NCentral takes care of some busy work underneath.
 
 ### Registration token injection
 
-Let's first take the example of injecting taking the registration token from the **customerList** method and injecting it via the **organizationPropertyModify** method. As above we'll assume we have a customer already and our list of customers is in the variable $CustomerList, take note of the line where gathering the value of the custom property with the id **123456789**.
+Let's first take the example of injecting taking the registration token from the **customerList** method and injecting it via the **organizationPropertyModify** method. As above we'll assume we have a connection `$nws` already and our list of customers is in the variable $CustomerList, take note of the line where gathering the value of the custom property with the id **123456789**.
 ```powershell
 ForEach ($Entity in $CustomerList) {
     $CustomerAssetInfo = @{}
@@ -410,7 +503,7 @@ Get-OrganizationPropertyID -OrganizationID 123 -PropertyName "Agent - Registrati
 
 The author notes that at time of writing, the **propertyid** appears to be the same for all customers/sites created at the same hierarchical level (System/SO/Customer/Site). For cases where you have multiple service organizations with the same named custom property created at the SO level they should be a different propertyid.
 
-For single SO deployments where the custom properties are created at the SO level they are globally unique, you could also create a lookup table for optimising your code to avoid performing a propertyid lookup for each update of a custom property, though we won't be covering that in this document.
+For single SO deployments where the custom properties are created at the SO level they are globally unique, you could also create a lookup table for optimising your code to avoid performing a **propertyid** lookup for each update of a custom property, though we won't be covering that in this document.
 
 ### Update customer property
 
@@ -418,31 +511,30 @@ Updating a _customer_ property such as the contact details or externalid values 
 
 ```customerModify([string]username,[string]password,[ListEiKeyValue]settings)```
 
-You may note in the PS-NCentral example it can update one property, either custom or customer, in a single call; whereas the EiKeyValue list can contain one or all of the customer values shown in **Appendix D – Customer Property variables** to be updated in a single call.
+You may note in the PS-NCentral example it can update one property, either *custom* or customer, in a single call; whereas the KeyValue list can contain one or all of the customer values shown in [Appendix D – Customer Property variables](#appendix-d---customer-property-variables) to be updated in a single call.
 
 We'll use an expanded data set from the PS-NCentral as we have more mandatory fields **customername** , **customerid** and **parentid** that are otherwise looked up by an internal helper function in PS-NCentral:
 
 | parentid | customerid | customername | firstname | lastname | email |
 | --- | --- | --- | --- | --- | --- |
-| 50 | 1 | Contoso | Claire | Young | Claire.Young@email.com |
-| 50 | 2 | Volcano Coffee | Benjamin | Metcalfe | Bmetacalfe@usa.com |
-| 50 | 3 | Northwind Traders | Kimberly | King | kk@asia.com |
-| 50 | 4 | WW Importers | Michael | Mills | Mmills@engineer.com |
-| 50 | 5 | Blue Yonder | Anthony | Jackson | 008Jac@mail.com |
+| 50 | 1 | Contoso | Claire | Young | `Claire.Young@email.com` |
+| 50 | 2 | Volcano Coffee | Benjamin | Metcalfe | `Bmetacalfe@usa.com` |
+| 50 | 3 | Northwind Traders | Kimberly | King | `kk@asia.com` |
+| 50 | 4 | WW Importers | Michael | Mills | `Mmills@engineer.com` |
+| 50 | 5 | Blue Yonder | Anthony | Jackson | `008Jac@mail.com` |
 
-You can retrieve the mandatory fields mentioned in the above table by retrieving the customer information as demonstrated in section 3.2.
+You can retrieve the mandatory fields mentioned in the above table by using the `CustomerList()` covered previously.
 
-In the below example the data is imported, then we generate the appropriate EIKeyValue array and assuming use the same $nwsconnection variable and $NWSNameSpace from previous examples to connect and update the modified keys.
+In the below example the data is imported, then we generate the appropriate KeyValue array and assuming use the same $nwsconnection variable and $NWSNameSpace from previous examples to connect and update the modified keys.
 ```powershell
-$KeyPairType = $NWSNameSpace.eiKeyValue
 $custData = Import-CSV C:\Temp\customerData.csv
 foreach ($Customer in $custData){
     #Gather properties to update
     $Properties = $Customer.psobject.properties
-    #Create an Arraylist of EIKeyValues to update
+    #Create an Arraylist of HashTables to update
     $ModifiedKeyList = New-Object System.Collections.ArrayList
     $Properties | ForEach-Object{
-        $KeyPair = New-Object -TypeName $KeyPairType
+        $KeyPair = @{}
         $KeyPair.key = $_.Name
         $KeyPair.value = $_.Value
         $ModifiedKeyList.Add($KeyPair)
@@ -452,9 +544,9 @@ foreach ($Customer in $custData){
 ```
 ### Add new a new Customer
 
-Not every cmdlet is currently available in PS-NCentral, one such cmdlet that could be useful is the automation of the creation of customer accounts. In the below example we use the ```$nws``` connection from before and pass through a hashtable of some of the customer properties in in Appendix D – Customer Property variables, note there are two required fields: **customername** and **partentid**
+Not every cmdlet is currently available in PS-NCentral, one such cmdlet that could be useful is the automation of the creation of customer accounts. In the below example we use the ```$nws``` connection from before and pass through a hashtable of some of the customer properties in in [Appendix D – Customer Property variables](#appendix-d---customer-property-variables), note there are two required fields: **customername** and **parentid**
 
-Combining the hashtable $newcustomer with the $JWT and $nws to the cmdlet it will create the customer. Note there is no output from the command but you should see the customer/site appear in N-Central.
+Combining the hashtable `$newcustomer` with the `$JWT` and `$nws` to the cmdlet it will create the customer. It will return the new CustomerID value once the job is completed.
 ```powershell
 $newcustomer = @{
     customername = "New Customer"
@@ -471,20 +563,38 @@ function Add-NCCustomer(
     [Hashtable]$CustomerTable,
     [String]$JWT,
     [System.Web.Services.Protocols.SoapHttpClientProtocol]$NcConnection) {
-    $internalNameSpace = $NcConnection.ToString().Split('.')[0]
-    $CustomerEiKeyList = New-Object System.Collections.ArrayList
+    $CustomerAttributeList = New-Object System.Collections.ArrayList
     foreach ($key in $CustomerTable.Keys){
-        $KeyPairType = $internalNameSpace.eiKeyValue
-        $KeyPair = New-Object -TypeName $KeyPairType
-        $KeyPair.key = $key
-        $KeyPair.value = $CustomerTable[$key]
-        $CustomerEiKeyList.Add($KeyPair)
+        $setting = @{key = $key; value = $CustomerTable[$key]}
+        $CustomerAttributeList.Add($setting) > $null
     }
-    $NcConnection.customerAdd("", $JWT, $CustomerEiKeyList)
+    $NcConnection.customerAdd("", $JWT, $CustomerAttributeList)
 }
 
 Add-NCCustomer -CustomerTable $newcustomer -JWT $JWT -NcConnection $nws
 ```
+
+At time of writing with PS-NCentral version 1.2 it is possible to use the CustomerAdd() method as it is exists inside the core class object now. While there is currently no Powershell function to call this, create a customer with it in the following way:
+
+```powershell
+#Connect to NC
+$NCSession = New-NCentralConnection -ServerFQDN nc.premiertech.com.au -JWT $JWT
+$ParentId = 50
+$NewCustomerAttributes = @{
+    firstname = "john"
+    lastname = "doe"
+    email = "john.doe@contoso.com"
+    city = "Melbourne"
+    telephone = "0312345678"
+    country = "AU"
+}
+
+$NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
+```
+You can also create the customer without attributes and fill them out later if you wish by simply calling `$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
+
+This function will return the value for the new Customer ID, you can then use that Id to perform further automation if needed.
+
 # Appendix A – N-Central Web Service members
 
 |Name |MemberType|
@@ -689,7 +799,7 @@ Add-NCCustomer -CustomerTable $newcustomer -JWT $JWT -NcConnection $nws
 |UseDefaultCredentials | Property |
 |UserAgent | Property |
 
-# Appendix B PS-NCentral cmdlets
+# Appendix - B PS-NCentral cmdlets
 
 | Command | Synopsis |
 | --- | --- |
@@ -716,7 +826,7 @@ Add-NCCustomer -CustomerTable $newcustomer -JWT $JWT -NcConnection $nws
 | Set-NCCustomerProperty | Fills the specified property(name) for the given CustomerID(s). |
 | Set-NCDeviceProperty | Fills the Custom Property for the DeviceID(s). |
 | Set-NCTimeOut | Sets the max. time in seconds to wait for data returning from a (Synchronous) NCentral API-request. |
-
+<br>
 # Appendix C – GetAllCustomerProperties.ps1
 
 ```powershell
@@ -726,22 +836,20 @@ Param(
     [Parameter(Mandatory = $true)]$serverHost,
     [Parameter(Mandatory = $true)]$JWT
 )
-# Generate a pseudo-unique namespace to use with the New-WebServiceProxy and associated types.
+# Generate a pseudo-unique namespace to use with the New-WebServiceProxy
 $NWSNameSpace = NAble + ([guid]::NewGuid()).ToString().Substring(25)
-$KeyPairType = $NWSNameSpace.eiKeyValue
 
 # Bind to the namespace, using the Webserviceproxy
 $bindingURL = "https://" + $serverHost + "/dms2/services2/ServerEI2?wsdl"
 $nws = New-Webserviceproxy $bindingURL -Namespace ($NWSNameSpace)
 
 # Set up and execute the query
-$KeyPair = New-Object -TypeName $KeyPairType
-$KeyPair.Key = 'listSOs'
-$KeyPair.Value = false
+$Settings = New-Object System.Collections.ArrayList
+$Settings.Add(@{key = "listSOs"; value = "True" })
 
 #Attempt to connect
 Try {
-    $CustomerList = $nws.customerList("", $JWT, $KeyPair)
+    $CustomerList = $nws.customerList("", $JWT, $Settings)
     $OrgPropertiesList = $nws.organizationPropertyList("", $JWT, $null, $false)
 }
 Catch {
@@ -786,6 +894,7 @@ ForEach ($Entity in $CustomerList) {
 #Output to the screen
 $CustomersReport | Out-GridView
 ```
+
 # Appendix D – Customer Property variables
 
 - **zip/postalcode** - (Value) Customer's zip/ postal code.
@@ -804,3 +913,43 @@ $CustomersReport | Out-GridView
 - **ext** - (Value) Customer contact's telephone extension.
 - **email** - (Value) Customer contact's email. Maximum of 100 characters.
 - **licensetype** - (Value) The default license type of new devices for the customer. Must be Professional or Essential. Default is Essential.
+
+# Appendix E - All PS-Central Methods
+| Name |
+| --- |
+|AccessGroupGet|
+|AccessGroupList|
+|ActiveIssuesList|
+|Connect|
+|CustomerAdd|
+|CustomerList|
+|CustomerListChildren|
+|CustomerModify|
+|DeviceAssetInfoExportDevice|
+|DeviceAssetInfoExportDeviceWithSettings|
+|DeviceGet|
+|DeviceGetAppliance|
+|DeviceGetStatus|
+|DeviceList|
+|DevicePropertyID|
+|DevicePropertyList|
+|DevicePropertyModify|
+|Equals|
+|ErrorHandler|
+|GetHashCode|
+|GetType|
+|JobStatusList|
+|OrganizationPropertyID|
+|OrganizationPropertyList|
+|OrganizationPropertyModify|
+|ProcessData1|
+|ProcessData2|
+|ToString|
+|UserRoleGet|
+|UserRoleList|
+
+# Credits
+Special Thanks go to the following Partners and Community Members for their contributions to the **NC-API-Documentation**
+*   David Brooks of Premier Technology Solutions
+*   Adriaan Sluis of Tosch for PS-NCentral 1.2 and notes
+*   Joshua Bennet of Impact Networking for notes on EiKeyValue usage
