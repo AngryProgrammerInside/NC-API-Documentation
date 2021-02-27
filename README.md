@@ -10,11 +10,13 @@
   * [PowerShell WebserviceProxy](#powershell-webserviceproxy)
 - [Performing Queries](#performing-queries)
   * [PS-NCentral](#ps-ncentral-1)
-    + [Advanced querying](#advanced-querying)
+    + [Advanced PS-NCentral querying](#advanced-ps-ncentral-querying)
   * [PowerShell WebserviceProxy](#powershell-webserviceproxy-1)
     + [Bind to the namespace, using the Webserviceproxy](#bind-to-the-namespace--using-the-webserviceproxy)
 - [Updating a Value](#updating-a-value)
   * [PS-NCentral](#ps-ncentral-2)
+    + [Updating with pipelining](#updating-with-pipelining)
+    + [Updating Custom Device Properties](#updating-custom-device-properties)
   * [PowerShell WebserviceProxy](#powershell-webserviceproxy-2)
     + [Registration token injection](#registration-token-injection)
     + [Gather organization property ID](#gather-organization-property-id)
@@ -385,7 +387,7 @@ foreach ($Customer in $custData){
     }
 }
 ```
-
+### Updating with pipelining
 Another advantage of PS-NCentral is that you can easily pipeline information through and set it as a customer property, in the first example we will update the **Reporting - Customer Name** again except this time utilising the pipe:
 ```powershell
 Get-NCCustomerList | Set-NCCustomerProperty -PropertyLabel 'Reporting – Customer Name' -PropertyValue $_.customername
@@ -409,6 +411,7 @@ Select-Object customerid, @{n="CustomerSLA"; e={$CustomerID = $_.customerid; (@(
 | Where-Object {$_.CustomerSLA} `
 | % { Set-NCCustomerProperty -CustomerIDs $_.CustomerID -PropertyLabel 'Reporting – Customer SLA' -PropertyValue $_.CustomerSLA }
 ```
+### Updating Custom Device Properties
 Another example would be where we may want to populate a Custom Device Property, in this case **'External ID'** based upon the CustomerID using in a customer table `$Customers`
 | **customerid** | **ExternalID** | 
 | --- | --- | 
