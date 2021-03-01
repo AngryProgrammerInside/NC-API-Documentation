@@ -69,7 +69,7 @@ import-module .\PS-NCentral.psm1 -Verbose
 
 #$credential = Get-Credential
 $password = ConvertTo-SecureString "YOUR JWT TOKEN" -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential ("ACCOUNT NAME REQUIRED", $password)
+$credential = New-Object System.Management.Automation.PSCredential ("_JWT", $password)
 
 #Connect to NC
 New-NCentralConnection -ServerFQDN YOUR SERVER FQDN -PSCredential $credential
@@ -96,6 +96,8 @@ If successful you will get an output similar to the below:
 | tCreds | |
 | DefaultCustomerID | 50 |
 | CustomerValidation | {zip/postalcode, street1, street2, city...} |
+
+The session is now stored in the global $\_NCSession variable, and wil automatically be used for other PS-NCentral commands.
 
 ### Multiple PS-NCentral server connections
 
@@ -404,13 +406,14 @@ In the second example we may have a custom table from a CSV or other source that
 | 321 | 8H | 
 
 \
-We then have this table in a variable `$CustomerPropers` and use it to populate a custom property called **'Reporting - Customer SLA'**
+We then have this table in a variable `$CustomerProps` and use it to populate a custom property called **'Reporting - Customer SLA'**
 ```powershell
 Get-NCCustomerList |
 Select-Object customerid, @{n="CustomerSLA"; e={$CustomerID = $_.customerid; (@($CustomerProps).where({ $_.customerID -eq $CustomerID })).CustomerSLA}} `
 | Where-Object {$_.CustomerSLA} `
-| % { Set-NCCustomerProperty -CustomerIDs $_.CustomerID -PropertyLabel 'Reporting – Customer SLA' -PropertyValue $_.CustomerSLA }
+| % { Set-NCCustomerProperty -CustomerIDs $_.CustomerID -PropertyLabel 'Reporting – Customer SLA' -PropertyValue ($_.CustomerSLA -join ',') }
 ```
+When multiple records for a customerid are found in $Customerprops all values will be added comma-separated.
 ### Updating Custom Device Properties
 Another example would be where we may want to populate a Custom Device Property, in this case **'External ID'** based upon the CustomerID using in a customer table `$Customers`
 | **customerid** | **ExternalID** | 
@@ -424,8 +427,8 @@ Another example would be where we may want to populate a Custom Device Property,
 ```powershell
 Get-NCDeviceList | `
 Select-Object DeviceID, `
-@{n="ExternalID"; e={$CustomerID = $_.customerid; (@($Customers).where({ $_.customerID -eq $CustomerID })).AzureAD}} | `
-Where-Object {$_.ExternalID} | %{Set-NCDeviceProperty -DeviceIDs $_.DeviceID -PropertyLabel 'ExternalID' -PropertyValue $_.ExternalID}
+@{n="ExternalID"; e={$CustomerID = $_.customerid; (@($Customers).where({ $_.customerID -eq $CustomerID })).ExternalID}} | `
+Where-Object {$_.ExternalID} | %{Set-NCDeviceProperty -DeviceIDs $_.DeviceID -PropertyLabel 'ExternalID' -PropertyValue ($_.ExternalID -join ',')}
 ```
 
 ## PowerShell WebserviceProxy
