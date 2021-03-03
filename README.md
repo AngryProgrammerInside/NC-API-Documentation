@@ -97,7 +97,7 @@ If successful you will get an output similar to the below:
 | DefaultCustomerID | 50 |
 | Error |  |
 
-The session is now stored in the global $\_NCSession variable, and will automatically be used for other PS-NCentral commands.
+The session is now stored in the global **$\_NCSession** variable, and will automatically be used for other PS-NCentral commands.
 
 ### Multiple PS-NCentral server connections
 
@@ -121,6 +121,8 @@ New-NCentralConnection "$NCentralFQDN" -JWT "$JWT1" -DefaultCustomerID 333
 $Customer333Devices = Get-NCDeviceList
 ```
 
+You can use **Set-NCCustomerDefault** to change the value afterwards.
+
 ## PowerShell WebserviceProxy
 
 As a preface to the usage of the New-WebserviceProxy cmdlet, we will focus on the v2 rather than v1 legacy API as the v1 maybe endpoint maybe deprecated at some point.
@@ -133,7 +135,7 @@ The main differences between the v1 and v2 endpoints are:
 
 It will be necessary to review the Javadocs provided on your server for the lastest information on the classes and constructors, you can find them under your own N-Central server under `https://n-central.mydomain.com/dms/`
 
-If reviewing other WebserviceProxy powershell code on the internet, you can identify v1/legacy code as it will have the following in the binding URL string: /dms/services/ServerEI?wsdl while v2 has /dms2/services2/ServerEI2?wsdl
+If reviewing other WebserviceProxy powershell code on the internet, you can identify **v1**/legacy code as it will have the following in the binding URL string: **/dms/services/ServerEI?wsdl** while **v2** has **/dms2/services2/ServerEI2?wsdl**
 
 For connecting to webservice you will need the same information as with the PS-NCentral which connects in the same way underneath:
 
@@ -176,7 +178,7 @@ $nws.customerList("", $JWT, $settings)
 
 As you will note when connecting with the `$nws` variable, at no point did you use your username or JWT, as you will observe in the `$nws.customerList` method called above, the  $JWT is used in every get or set, and the username is simply `""` as the username is inside of the JWT string.
 
-Underneath the PS-NCentral module it saves these variables and re-uses each time a cmdlet is used.
+Underneath the PS-NCentral module it saves these variables with each connection and re-uses each time a cmdlet is used.
 
 # Performing Queries
 
@@ -224,21 +226,26 @@ The PS-NCentral module provides ease of access to N-Central API calls with norma
 
 ```powershell
 # Connect to NC
-$NCSession = New-NCentralConnection -ServerFQDN n-central.myserver.com -PSCredential $credential
+$NCSession = New-NCentralConnection -ServerFQDN $ServerFQDN -JWT $JWT
 
 # Grab the customer list/details
 $CustomerList = $NCSession.CustomerList()
 
 # Get the customer properties
 $CustomerPropertyList = $NCSession.OrganizationPropertyList()
-
-# Get the devices for customerid 100
-$Customer100Devices = $NCSession.DeviceList(100)
 ```
 
 We can get the list of all the underlying class connection methods by enumerating the members with `$_NCSession | Get-Member -MemberType Method` to see all 'inside' methods, which reflect the API-methods of N-Central ('http://mothership.n-able.com/dms/javadoc_ei2/com/nable/nobj/ei2/ServerEI2_PortType.html') where applicable.
 
 Most methods have 'Overloads'. These are selected based on the parameter-pattern eg. `([String], [String])` or `([String],[Int])`.
+
+```powershell
+#Get the devices for customerid 100
+$Customer100Devices = $NCSession.DeviceList(100)
+
+#Get the probes for customerid 100
+$Customer100Probes = $NCSession.DeviceList(100,$false,$true)
+```
 
 For a list of all methods see [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
 
