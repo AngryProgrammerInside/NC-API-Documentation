@@ -39,7 +39,7 @@ The information covering the PS-NCentral is useful for those with starting some 
 
 At time of writing version 1.2 is in beta release, and we'll cover some of the nuances of that version. The main advantage of version 1.2 is making it PowerShell 7 for cross compatability to be able to run Windows/Linux or in an Azure function.
 
-PS-NCentral provides cmdlets for 17 Get cmdlets and 3 Set cmdlets that cover the majority, so should cover the majority of automation. This can be downloaded from: [https://github.com/ToschAutomatisering/PS-NCentral](https://github.com/ToschAutomatisering/PS-NCentral)
+PS-NCentral provides cmdlets for 17 Get cmdlets and 4 Set cmdlets (See Appendix B) that cover the majority, so should cover the majority of automation. This can be downloaded from: [https://github.com/ToschAutomatisering/PS-NCentral](https://github.com/ToschAutomatisering/PS-NCentral)
 
 Or installed with the cmdlet
 
@@ -72,7 +72,7 @@ $password = ConvertTo-SecureString "YOUR JWT TOKEN" -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ("_JWT", $password)
 
 #Connect to NC
-New-NCentralConnection -ServerFQDN YOUR SERVER FQDN -PSCredential $credential
+New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -PSCredential $credential
 ```
 **Version 1.2**
 
@@ -88,16 +88,16 @@ If successful you will get an output similar to the below:
 
 |Property | Value|
 |--------|-----|
-| Error | |
-| ConnectionURL | `n-central.mydomain.com`|
-| BindingURL | `https://n-central.mydomain.com/dms2/services2/ServerEI2?`wsdl |
+| ConnectionURL | `n-central.mydomain.com` |
+| BindingURL        | `https://n-central.mydomain.com/dms2/services2/ServerEI2?wsdl' |
+| AllProtocols      | tls12,tls13                                                  |
 | IsConnected | True |
-| NCVersion | |
-| tCreds | |
+| RequestTimeOut | 100 |
+| NCVersion | 2020.1.5.425 |
 | DefaultCustomerID | 50 |
-| CustomerValidation | {zip/postalcode, street1, street2, city...} |
+| Error |  |
 
-The session is now stored in the global $\_NCSession variable, and wil automatically be used for other PS-NCentral commands.
+The session is now stored in the global $\_NCSession variable, and will automatically be used for other PS-NCentral commands.
 
 ### Multiple PS-NCentral server connections
 
@@ -114,7 +114,7 @@ $NC1Customers = Get-NCCustomerList -NcSession $Connection1
 $NC2Customers = Get-NCCustomerList -NcSession $Connection2
 ```
 
-Another useful pameter when connecting is the **DefaultCustomerID**, this sets the default scope for when calling cmdlets such as Get-NCDeviceList, so if I were to perform the following connection and function call it would only give me all devices associated with CustomerID 333
+Another useful pameter when connecting is the **DefaultCustomerID**, this sets the default scope for when calling cmdlets such as Get-NCDeviceList without a parameter, so if I were to perform the following connection and function call it would only give me all devices associated with CustomerID 333
 
 ``` powershell
 New-NCentralConnection "$NCentralFQDN" -JWT "$JWT1" -DefaultCustomerID 333
@@ -186,13 +186,11 @@ Performing queries with the PS-Central module is quick and easy, and several exa
 ```powershell
 Import-Module PS-NCentral.psm1 -Verbose
 
-$username = "ACCOUNT NAME"
+$ServerFQDN = n-central.myserver.com
 $JWT = "JWT TOKEN"
-$password = ConvertTo-SecureString $JWT -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential ($username, $password)
 
 #Connect to NC
-New-NCentralConnection -ServerFQDN n-central.myserver.com -PSCredential $credential
+New-NCentralConnection -ServerFQDN $ServerFQDN -JWT $JWT
 
 #Grab the customer list/details
 $CustomerList = Get-NCCustomerList
@@ -219,7 +217,7 @@ foreach ($Customer in $CustomerList) {
 $CustomerReport | Out-GridView
 ```
 
-The important parts of this example are the simple one line calls for the **New-CentralConnection** , **Get-NCCsutomerList** and **Get-NCCustomerPropertyList**. With very little effort we can connect, retrieve the data then process into a single table for review.
+The important parts of this example are the simple one line calls for the **New-CentralConnection** , **Get-NCCustomerList** and **Get-NCCustomerPropertyList**. With very little effort we can connect, retrieve the data then process into a single table for review.
 
 ### Advanced PS-NCentral querying
 The PS-NCentral module provides ease of access to N-Central API calls with normal **verb-noun** functions, but you can also perform a direct call through the internal connection class, we could replace the above function calls with these methods:
@@ -233,9 +231,14 @@ $CustomerList = $NCSession.CustomerList()
 
 # Get the customer properties
 $CustomerPropertyList = $NCSession.OrganizationPropertyList()
+
+# Get the devices for customerid 100
+$Customer100Devices = $NCSession.DeviceList(100)
 ```
 
-We can get the list of all the underlying class connection methods by enumerating the members with `$NCSession | Get-Member  -MemberType Method` to see all 'inside' methods. Most methods have 'Overloads'. These are selected based on the parameter-pattern eg. `([String], [String])` or `([String],[Int])`.
+We can get the list of all the underlying class connection methods by enumerating the members with `$_NCSession | Get-Member -MemberType Method` to see all 'inside' methods, which reflect the API-methods of N-Central ('http://mothership.n-able.com/dms/javadoc_ei2/com/nable/nobj/ei2/ServerEI2_PortType.html') where applicable.
+
+Most methods have 'Overloads'. These are selected based on the parameter-pattern eg. `([String], [String])` or `([String],[Int])`.
 
 For a list of all methods see [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
 
@@ -397,13 +400,13 @@ Get-NCCustomerList | Set-NCCustomerProperty -PropertyLabel 'Reporting – Custom
 
 In the second example we may have a custom table from a CSV or other source that has the following properties and values:
 
-| **customerid** | **CustomerSLA** | 
-| --- | --- | 
-| 123 | 1H | 
-| 124 | 4H | 
-| 221 | 8H | 
-| 233 | 8H | 
-| 321 | 8H | 
+| **customerid** | **CustomerSLA** |
+| --- | --- |
+| 123 | 1H |
+| 124 | 4H |
+| 221 | 8H |
+| 233 | 8H |
+| 321 | 8H |
 
 \
 We then have this table in a variable `$CustomerProps` and use it to populate a custom property called **'Reporting - Customer SLA'**
@@ -414,15 +417,30 @@ Select-Object customerid, @{n="CustomerSLA"; e={$CustomerID = $_.customerid; (@(
 | % { Set-NCCustomerProperty -CustomerIDs $_.CustomerID -PropertyLabel 'Reporting – Customer SLA' -PropertyValue ($_.CustomerSLA -join ',') }
 ```
 When multiple records for a customerid are found in $Customerprops all values will be added comma-separated.
+
+The important parts of this example are the table-lookup 
+
+```
+(@(<TableObject>).where(<LookupColumn> -eq <LookupValue>)).<ResultsColumn>
+```
+
+and the filter to only return objects which had values added
+
+```
+Where-Object {$_.<AddedCustomField>}
+```
+
+before setting the properties.
+
 ### Updating Custom Device Properties
 Another example would be where we may want to populate a Custom Device Property, in this case **'External ID'** based upon the CustomerID using in a customer table `$Customers`
-| **customerid** | **ExternalID** | 
-| --- | --- | 
-| 123 | 78409377 | 
-| 124 | 78405890 | 
-| 221 | 78404905 | 
-| 233 | 78402984 | 
-| 321 | 38940384 | 
+| **customerid** | **ExternalID** |
+| --- | --- |
+| 123 | 78409377 |
+| 124 | 78405890 |
+| 221 | 78404905 |
+| 233 | 78402984 |
+| 321 | 38940384 |
 
 ```powershell
 Get-NCDeviceList | `
@@ -584,7 +602,7 @@ At time of writing with PS-NCentral version 1.2 it is possible to use the Custom
 
 ```powershell
 #Connect to NC
-$NCSession = New-NCentralConnection -ServerFQDN nc.premiertech.com.au -JWT $JWT
+$NCSession = New-NCentralConnection -ServerFQDN n-central.myserver.com -JWT $JWT
 $ParentId = 50
 $NewCustomerAttributes = @{
     firstname = "john"
