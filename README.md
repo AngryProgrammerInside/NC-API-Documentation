@@ -49,7 +49,7 @@ Install-Module PS-NCentral
 
 # Connecting
 
-The first step required before connecting is to create a new automation account with appropriate role permissions. With N-Central 2020 or 12.3 HF4 and later you must disable the MFA requirement for the account so use a long and complex password.
+The first step required before connecting is to create a new automation account with appropriate role permissions. With N-Central 2020 or 12.3 HF4 and later you must **disable the MFA** requirement for the account if you want to use these **credentials directly** for authenticating. So use a long and complex password then.
 
 Once the account is created, select the API Authentication tab and click on the ' **Generate JSON Web Token**' button, save this **JWT** token somewhere secure, if you lose your JWT, you can generate another one at any time, but it will invalidate the previous one. If you update/change role permissions for the account automation account you will need to regenerate the token, as the asserted permissions are in the JWT.
 
@@ -59,29 +59,45 @@ Connecting to your N-Central service with PS-NCentral only needs to be done once
 
 - The fqdn of your N-Central server, ie: `n-central.mydomain.com`
 - The JWT from above
+- Username/Password (no MFA) for versions **before 1.2**.
 
 Then enter the following:
 
-**Version 1.1**
+**All versions**
+
 ```powershell
 #Import the PS-NCentral module
 import-module .\PS-NCentral.psm1 -Verbose
 
-#$credential = Get-Credential
+#$credential = Get-Credential		## This line can be used for a dialog. Skip 2 below.
+$password = ConvertTo-SecureString "<Password>" -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential ("<User>", $password)
+
+#Connect to NC
+New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -PSCredential $credential
+```
+
+**Version 1.2 and later**
+
+```powershell
+#Import the PS-NCentral module
+import-module .\PS-NCentral.psm1 -Verbose
+
+#Credentials with JWT
 $password = ConvertTo-SecureString "YOUR JWT TOKEN" -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ("_JWT", $password)
 
 #Connect to NC
 New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -PSCredential $credential
 ```
-**Version 1.2**
+**or**
 
 ```powershell
 #Import the PS-NCentral module
 import-module .\PS-NCentral.psm1 -Verbose
 
-#Connect to NC
-New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -JWT "YOUR JWT STRING"
+#Connect to NC using the JWT directly
+New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -JWT "YOUR JWT TOKEN"
 ```
 
 If successful you will get an output similar to the below:
@@ -125,7 +141,7 @@ You can use **Set-NCCustomerDefault** to change the value afterwards.
 
 ## PowerShell WebserviceProxy
 
-As a preface to the usage of the New-WebserviceProxy cmdlet, we will focus on the v2 rather than v1 legacy API as the v1 maybe endpoint maybe deprecated at some point.
+As a preface to the usage of the New-WebserviceProxy cmdlet, we will focus on the v2 rather than v1 legacy API as the v1 endpoint maybe deprecated at some point.
 
 The main differences between the v1 and v2 endpoints are:
 
