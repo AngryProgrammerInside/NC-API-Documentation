@@ -77,6 +77,8 @@ $credential = New-Object System.Management.Automation.PSCredential ("<User>", $p
 New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -PSCredential $credential
 ```
 
+\* Might generate an error on some complex passwords. Avoid using a ^.
+
 **Version 1.2 and later**
 
 ```powershell
