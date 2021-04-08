@@ -49,13 +49,15 @@ Install-Module PS-NCentral
 
 # Connecting
 
-The first step required before connecting is to create a new automation account with appropriate role permissions. With N-Central 2020 or 12.3 HF4 and later you must **disable the MFA** requirement for the account if you want to use these **credentials directly** for authenticating. So use a long and complex password then.
+The first step required before connecting is to create a new automation account with appropriate role permissions. With N-Central 2020 or 12.3 HF4 and later you must **disable the MFA** requirement for the account, so use a long and complex password. The (preferred) API-Only account in N-Central 2021 needs to be set to \'mfa not needed\'.
 
 Once the account is created, select the API Authentication tab and click on the ' **Generate JSON Web Token**' button, save this **JWT** token somewhere secure, if you lose your JWT, you can generate another one at any time, but it will invalidate the previous one. If you update/change role permissions for the account automation account you will need to regenerate the token, as the asserted permissions are in the JWT.
 
+Note: Activating the MFA-setting after generating the token still blocks JWT-access, as well as an expired password for the originating account (90 days default).
+
 ## PS-NCentral
 
-Connecting to your N-Central service with PS-NCentral only needs to be done once per session. Your first require the following information:
+Connecting to your N-Central service with PS-NCentral only needs to be done once per session. You first require the following information:
 
 - The fqdn of your N-Central server, ie: `n-central.mydomain.com`
 - The JWT from above
@@ -115,7 +117,7 @@ If successful you will get an output similar to the below:
 | DefaultCustomerID | 50 |
 | Error |  |
 
-The session is now stored in the global **$\_NCSession** variable, and will automatically be used for other PS-NCentral commands.
+The session is now stored in the global **$\_NCSession** variable, and will automatically be used as default for following PS-NCentral commands.
 
 ### Multiple PS-NCentral server connections
 
@@ -260,6 +262,8 @@ Most methods have 'Overloads'. These are selected based on the parameter-pattern
 ```powershell
 #Get the devices for customerid 100
 $Customer100Devices = $NCSession.DeviceList(100)
+#or
+$Customer100Devices = $NCSession.DeviceList(100,$true,$false)
 
 #Get the probes for customerid 100
 $Customer100Probes = $NCSession.DeviceList(100,$false,$true)
