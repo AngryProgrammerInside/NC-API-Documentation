@@ -41,7 +41,7 @@ At time of writing version 1.2 is in beta release, and we'll cover some of the n
 
 PS-NCentral provides cmdlets for 17 Get cmdlets and 4 Set cmdlets (See Appendix B) that cover the majority, so should cover the majority of automation. This can be downloaded from: [https://github.com/ToschAutomatisering/PS-NCentral](https://github.com/ToschAutomatisering/PS-NCentral)
 
-Or installed with the cmdlet
+Or installed from PS-Gallery with the cmdlet
 
 ```powershell
 Install-Module PS-NCentral
@@ -87,6 +87,16 @@ New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -PSCredential $credential
 #Import the PS-NCentral module
 import-module .\PS-NCentral.psm1 -Verbose
 
+#Connect to NC using the JWT directly
+New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -JWT "YOUR JWT TOKEN"
+```
+
+which is equivalent to:
+
+```powershell
+#Import the PS-NCentral module
+import-module .\PS-NCentral.psm1 -Verbose
+
 #Credentials with JWT
 $password = ConvertTo-SecureString "YOUR JWT TOKEN" -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ("_JWT", $password)
@@ -94,16 +104,6 @@ $credential = New-Object System.Management.Automation.PSCredential ("_JWT", $pas
 #Connect to NC
 New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -PSCredential $credential
 ```
-**or**
-
-```powershell
-#Import the PS-NCentral module
-import-module .\PS-NCentral.psm1 -Verbose
-
-#Connect to NC using the JWT directly
-New-NCentralConnection -ServerFQDN "YOUR SERVER FQDN" -JWT "YOUR JWT TOKEN"
-```
-
 If successful you will get an output similar to the below:
 
 |Property | Value|
