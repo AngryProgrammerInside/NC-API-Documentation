@@ -2,7 +2,6 @@
 
 ## Table of Contents
 - [How To: N-Central API Automation](#how-to--n-central-api-automation)
-  * [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Connecting](#connecting)
   * [PS-NCentral](#ps-ncentral)
@@ -27,7 +26,11 @@
 - [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
 - [Appendix D – Customer Property variables](#appendix-d---customer-property-variables)
 - [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
+- [Appendix F - Common Error Codes](#appendix-f---common-error-codes)
 - [Credits](#credits)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 
 # Overview
 
@@ -35,9 +38,7 @@ N-Central's API is a flexible, programmatic, object oriented, Java based interfa
 
 For the purposes of this guide we'll be covering connectivity and basic usage with PowerShell based automation through the PS-NCentral module, as well as native WebserviceProxy cmdlet.
 
-The information covering the PS-NCentral is useful for those with starting some experience with PowerShell or need to quickly put together code where module dependency isn't an issue, while the usage of the WebserviceProxy method is for those more familiar with object oriented coding or need code portatability.
-
-At time of writing version 1.2 is in beta release, and we'll cover some of the nuances of that version. The main advantage of version 1.2 is making it PowerShell 7 for cross compatability to be able to run Windows/Linux or in an Azure function.
+The information covering the PS-NCentral is useful for those with starting some experience with PowerShell or need to quickly put together code where module dependency isn't an issue, while the usage of the WebserviceProxy method is for those more familiar with object oriented coding or need code portatability. As of version 1.2 PS-NCentral uses PowerShell 7 for cross compatability to be able to run Windows/Linux or in an Azure function.
 
 PS-NCentral provides cmdlets for 17 Get cmdlets and 4 Set cmdlets (See Appendix B) that cover the majority, so should cover the majority of automation. This can be downloaded from: [https://github.com/ToschAutomatisering/PS-NCentral](https://github.com/ToschAutomatisering/PS-NCentral)
 
@@ -1000,6 +1001,12 @@ $CustomersReport | Out-GridView
 |ToString|
 |UserRoleGet|
 |UserRoleList|
+
+# Appendix F - Common Error Codes
+#1012 - Thrown when mandatory settings are not present in "settings".
+#2100 - Thrown when invalid MSP N-central credentials are input.
+#5000 - An unexpected exception occurred.
+#3020 - Account is locked
 
 # Credits
 Special Thanks go to the following Partners and Community Members for their contributions to the **NC-API-Documentation**
