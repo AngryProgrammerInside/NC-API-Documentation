@@ -146,6 +146,8 @@ You can use **Set-NCCustomerDefault** to change the value afterwards.
 
 ## PowerShell WebserviceProxy
 
+Notice the WebserviceProxy is discontinued after PowerShell version 5.1.
+
 As a preface to the usage of the New-WebserviceProxy cmdlet, we will focus on the v2 rather than v1 legacy API as the v1 endpoint maybe deprecated at some point.
 
 The main differences between the v1 and v2 endpoints are:
@@ -243,7 +245,7 @@ $CustomerReport | Out-GridView
 The important parts of this example are the simple one line calls for the **New-CentralConnection** , **Get-NCCustomerList** and **Get-NCCustomerPropertyList**. With very little effort we can connect, retrieve the data then process into a single table for review.
 
 ### Advanced PS-NCentral querying
-The PS-NCentral module provides ease of access to N-Central API calls with normal **verb-noun** functions, but you can also perform a direct call through the internal connection class, we could replace the above function calls with these methods:
+The PS-NCentral module provides ease of access to N-Central API calls with normal **verb-noun** functions, but you can also perform a direct call through the internal connection class. We could replace the above function calls with these methods:
 
 ```powershell
 # Connect to NC
@@ -478,6 +480,41 @@ Select-Object DeviceID, `
 @{n="ExternalID"; e={$CustomerID = $_.customerid; (@($Customers).where({ $_.customerID -eq $CustomerID })).ExternalID}} | `
 Where-Object {$_.ExternalID} | %{Set-NCDeviceProperty -DeviceIDs $_.DeviceID -PropertyLabel 'ExternalID' -PropertyValue ($_.ExternalID -join ',')}
 ```
+
+
+
+### Custom Property options
+
+These options are introduced in PS-NCentral version **1.3**.
+
+#### Encoding
+
+Use the **-Base64** option to Encode/Decode a CustomProperty when using Set or Get. Unicode (utf16) by default, -utf8 option available.
+
+**Convert-Base64** is available as a seperate command too.
+
+
+
+#### Comma-Separated Values
+
+When a Custom Property holds a string of (unique) Comma-seperated values you can easily Add or Remove a single value with the commands:
+
+- Add-NCCustomerPropertyValue
+- Add-NCDevicePropertyValue
+- Remove-NCCustomerPropertyValue
+- Remove-NCDevicePropertyValue   
+
+Use Get-help \<command\> to see the options.
+
+
+
+#### Format-properties
+
+Sometimes not all objects in a list have the same properties. This can become an issue when using **Format-Table** or **Output-CSV**, which only use the properties of the first object in the list.
+
+The **Format-Properties** cmdlet ensures all unique properties are added to all objects in a list. It is integrated in several PS-NCentral list-commands but also available as a seperate command.
+
+
 
 ## PowerShell WebserviceProxy
 
@@ -951,21 +988,29 @@ $CustomersReport | Out-GridView
 
 # Appendix D – Customer Property variables
 
-- **zip/postalcode** - (Value) Customer's zip/ postal code.
+These are the default properties returned in the customerlist. After connecting using PS-NCentral this list can also be found in the customervalidation property. 
+
+```powershell
+$_ncsession.customervalidation
+```
+
+- **postalcode** - (Value) Customer's zip/ postal code.
 - **street1** - (Value) Address line 1 for the customer. Maximum of 100 characters.
 - **street2** - (Value) Address line 2 for the customer. Maximum of 100 characters.
 - **city** - (Value) Customer's city.
-- **state/province** - (Value) Customer's state/ province.
-- **telephone** - (Value) Phone number of the customer.
+- **stateprov** - (Value) Customer's state/ province.
+- **phone** - (Value) Phone number of the customer.
 - **country** - (Value) Customer's country. Two character country code, see http://en.wikipedia.org/wiki/ISO\_3166-1\_alpha-2 for a list of country codes.
 - **externalid** - (Value) An external reference id.
-- **firstname** - (Value) Customer contact's first name.
-- **lastname** - (Value) Customer contact's last name.
-- **title** - (Value) Customer contact's title.
-- **department** - (Value) Customer contact's department.
-- **contact\_telephone** - (Value) Customer contact's telephone number.
-- **ext** - (Value) Customer contact's telephone extension.
-- **email** - (Value) Customer contact's email. Maximum of 100 characters.
+- **externalid2** - (Value) A second external reference id.
+- **contactfirstname** - (Value) Customer contact's first name.
+- **contactlastname** - (Value) Customer contact's last name.
+- **contacttitle** - (Value) Customer contact's title.
+- **contactdepartment** - (Value) Customer contact's department.
+- **contactphonenumber** - (Value) Customer contact's telephone number.
+- **contactext** - (Value) Customer contact's telephone extension.
+- **contactemail** - (Value) Customer contact's email. Maximum of 100 characters.
+- **registrationtoken** - (ReadOnly) For agent/probe-install validation.
 - **licensetype** - (Value) The default license type of new devices for the customer. Must be Professional or Essential. Default is Essential.
 
 # Appendix E - All PS-Central Methods
