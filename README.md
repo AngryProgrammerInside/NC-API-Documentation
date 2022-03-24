@@ -1,8 +1,41 @@
 # How To: N-Central API Automation
 
 ## Table of Contents
+- [How To: N-Central API Automation](#how-to--n-central-api-automation)
+  * [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Connecting](#connecting)
+  * [PS-NCentral](#ps-ncentral)
+    + [Multiple PS-NCentral server connections](#multiple-ps-ncentral-server-connections)
+  * [PowerShell WebserviceProxy](#powershell-webserviceproxy)
+- [Performing Queries](#performing-queries)
+  * [PS-NCentral](#ps-ncentral-1)
+    + [Advanced PS-NCentral querying](#advanced-ps-ncentral-querying)
+  * [PowerShell WebserviceProxy](#powershell-webserviceproxy-1)
+    + [Bind to the namespace, using the Webserviceproxy](#bind-to-the-namespace--using-the-webserviceproxy)
+- [Updating a Value](#updating-a-value)
+  * [PS-NCentral](#ps-ncentral-2)
+    + [Updating with pipelining](#updating-with-pipelining)
+    + [Updating Custom Device Properties](#updating-custom-device-properties)
+    + [Custom Property options](#custom-property-options)
+      - [Encoding](#encoding)
+      - [Comma-Separated Values](#comma-separated-values)
+      - [Format-properties](#format-properties)
+  * [PowerShell WebserviceProxy](#powershell-webserviceproxy-2)
+    + [Registration token injection](#registration-token-injection)
+    + [Gather organization property ID](#gather-organization-property-id)
+    + [Update customer property](#update-customer-property)
+    + [Add new a new Customer](#add-new-a-new-customer)
+- [Appendix A – N-Central Web Service members](#appendix-a---n-central-web-service-members)
+- [Appendix - B PS-NCentral cmdlets](#appendix---b-ps-ncentral-cmdlets)
+- [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
+- [Appendix D – Customer Property variables](#appendix-d---customer-property-variables)
+- [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
+- [Appendix F - Common Error Codes](#appendix-f---common-error-codes)
+- [Appendix G - Issue Status](#appendix-g---issue-status)
+- [Credits](#credits)
 
-[toc]
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 
 # Overview
