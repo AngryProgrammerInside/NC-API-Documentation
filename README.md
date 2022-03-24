@@ -1,35 +1,8 @@
 # How To: N-Central API Automation
 
 ## Table of Contents
-- [How To: N-Central API Automation](#how-to--n-central-api-automation)
-- [Overview](#overview)
-- [Connecting](#connecting)
-  * [PS-NCentral](#ps-ncentral)
-    + [Multiple PS-NCentral server connections](#multiple-ps-ncentral-server-connections)
-  * [PowerShell WebserviceProxy](#powershell-webserviceproxy)
-- [Performing Queries](#performing-queries)
-  * [PS-NCentral](#ps-ncentral-1)
-    + [Advanced PS-NCentral querying](#advanced-ps-ncentral-querying)
-  * [PowerShell WebserviceProxy](#powershell-webserviceproxy-1)
-    + [Bind to the namespace, using the Webserviceproxy](#bind-to-the-namespace--using-the-webserviceproxy)
-- [Updating a Value](#updating-a-value)
-  * [PS-NCentral](#ps-ncentral-2)
-    + [Updating with pipelining](#updating-with-pipelining)
-    + [Updating Custom Device Properties](#updating-custom-device-properties)
-  * [PowerShell WebserviceProxy](#powershell-webserviceproxy-2)
-    + [Registration token injection](#registration-token-injection)
-    + [Gather organization property ID](#gather-organization-property-id)
-    + [Update customer property](#update-customer-property)
-    + [Add new a new Customer](#add-new-a-new-customer)
-- [Appendix A – N-Central Web Service members](#appendix-a---n-central-web-service-members)
-- [Appendix - B PS-NCentral cmdlets](#appendix---b-ps-ncentral-cmdlets)
-- [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
-- [Appendix D – Customer Property variables](#appendix-d---customer-property-variables)
-- [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
-- [Appendix F - Common Error Codes](#appendix-f---common-error-codes)
-- [Credits](#credits)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+[toc]
 
 
 # Overview
@@ -918,6 +891,7 @@ This function will return the value for the new Customer ID, you can then use th
 | Set-NCDeviceProperty | Fills the Custom Property for the DeviceID(s). |
 | Set-NCTimeOut | Sets the max. time in seconds to wait for data returning from a (Synchronous) NCentral API-request. |
 <br>
+
 # Appendix C – GetAllCustomerProperties.ps1
 
 ```powershell
@@ -1053,8 +1027,34 @@ $_ncsession.customervalidation
 #5000 - An unexpected exception occurred.
 #3020 - Account is locked
 
+
+
+# Appendix G - Issue Status
+
+These codes can be used with the **-IssueStatus** option of the **Get-NCActiveIssuesList** command. 
+
+```
+1	Failed
+2	Stale
+3	Normal        --> Nothing returned
+4	Warning
+5	No Data
+6	Misconfigured
+7	Disconnected
+
+11	Unacknowledged
+12	Acknowledged
+```
+
+The API does not allow combinations of these filters.
+
+- **1-7** are reflected in the **notifstate**-property.
+- **11** and **12** relate to the properties **numberofactivenotification** and **numberofacknowledgednotification**.
+
+
+
 # Credits
 Special Thanks go to the following Partners and Community Members for their contributions to the **NC-API-Documentation**
 *   David Brooks of Premier Technology Solutions
-*   Adriaan Sluis of Tosch for PS-NCentral 1.2 and notes
+*   Adriaan Sluis of Tosch for PS-NCentral and notes
 *   Joshua Bennet of Impact Networking for notes on EiKeyValue usage
