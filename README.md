@@ -1055,10 +1055,44 @@ $_ncsession.customervalidation
 |UserRoleList|
 
 # Appendix F - Common Error Codes
-#1012 - Thrown when mandatory settings are not present in "settings".
-#2100 - Thrown when invalid MSP N-central credentials are input.
-#5000 - An unexpected exception occurred.
-#3020 - Account is locked
+
+\#    Connection-error (https): There was an error downloading ..
+
+\#    1012 - Thrown when mandatory settings are not present in "settings".
+
+\#    2001 - Required parameter is null - Thrown when null values are entered as inputs.
+
+\#    2001 - Unsupported version - Thrown when a version not specified above is entered as input.
+
+\#    2001 - Thrown when a bad username-password combination is input, or no PSA integration has been set up.
+
+\#    2100 - Thrown when invalid MSP N-central credentials are input.
+
+\#    2100 - Thrown when MSP-N-central credentials with MFA are used.
+
+\#    3010 - Maximum number of users reached.
+
+\#    3012 - Specified email address is already assigned to another user.
+
+\#    3014 - Creation of a user for the root customer (CustomerID 1) is not permitted.
+
+\#    3014 - When adding a user, must not be an LDAP user.
+
+\#    3020 - Account is locked
+
+\#    3022 - Customer/Site already exists.
+
+\#    3026 - Customer name length has exceeded 120 characters.
+
+\#    4000 - SessionID not found or has expired.
+
+\#    5000 - An unexpected exception occurred.
+
+\#    5000 - Query failed.
+
+\#    5000 - javax.validation.ValidationException: Unable to validate UI session
+
+\#    9910 - Service Organization already exists.
 
 
 
