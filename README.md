@@ -154,7 +154,8 @@ You can use **Set-NCCustomerDefault** to change the value afterwards.
 
 ## PowerShell WebserviceProxy
 
-Notice the WebserviceProxy is discontinued after PowerShell version 5.1.
+Notice the WebserviceProxy is discontinued after PowerShell version 5.1. You can find alternative code in [Appendix H - WebserviceProxy Alternative](#appendix-h---webserviceproxy-alternative)
+
 
 As a preface to the usage of the New-WebserviceProxy cmdlet, we will focus on the v2 rather than v1 legacy API as the v1 endpoint maybe deprecated at some point.
 
@@ -379,10 +380,7 @@ For the complete script see [Appendix C – GetAllCustomerProperties.ps1](#appen
 
 
 
-Note that **WebServiceProxy** is **discontinued** by Microsoft in PowerShell versions after 5.1. You can find alternative code in 
-
-[Appendix H - WebserviceProxy Alternative](#AppendixH-WebserviceProxyAlternative)
-
+Note that **WebServiceProxy** is **discontinued** by Microsoft in PowerShell versions after 5.1. You can find alternative code in [Appendix H - WebserviceProxy Alternative](#appendix-h---webserviceproxy-alternative)
 
 
 # Updating a Value
