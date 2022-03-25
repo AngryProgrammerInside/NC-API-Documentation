@@ -1171,9 +1171,9 @@ Function GetNCData([String]$APIMethod,[String]$Username,[String]$PassOrJWT,$KeyP
     #Write-Host $MySoapRequest       ## For Debug/Educational purpose
     
     ## Request DataSet
-    $FullReponse = $null
+    $FullResponse = $null
     Try{
-            $FullReponse = Invoke-RestMethod -Uri $BindingURL -body $MySoapRequest -Method POST
+            $FullResponse = Invoke-RestMethod -Uri $BindingURL -body $MySoapRequest -Method POST
         }
     Catch{
             Write-Host ("Could not connect: {0}." -f $_.Exception.Message )
@@ -1181,10 +1181,10 @@ Function GetNCData([String]$APIMethod,[String]$Username,[String]$PassOrJWT,$KeyP
         }
         
     ## Process Returned DataSet
-    $ReturnClass = $FullReponse.envelope.body | Get-Member -MemberType Property
+    $ReturnClass = $FullResponse.envelope.body | Get-Member -MemberType Property
     $ReturnProperty = $ReturnClass[0].Name
             
-    Return  $FullReponse.envelope.body.$ReturnProperty.return
+    Return  $FullResponse.envelope.body.$ReturnProperty.return
 }
 # End of Function GetNCData
 
