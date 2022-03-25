@@ -1130,7 +1130,7 @@ The API does not allow combinations of these filters.
 
 # Appendix H - WebserviceProxy Alternative
 
-
+The command **WebServiceProxy** is **discontinued** by Microsoft in PowerShell versions after 5.1. Below you can find an example of retrieving data with **Invoke-RestMethod**  and compare it to the use of WebserviceProxy. 
 
 ```PowerShell
 ## Retrieving data from N-Central by SOAP-API
