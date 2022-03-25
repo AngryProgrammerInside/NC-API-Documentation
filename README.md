@@ -1,8 +1,9 @@
 # How To: N-Central API Automation
 
-## Table of Contents
+## Table of Content
+
 - [How To: N-Central API Automation](#how-to--n-central-api-automation)
-  * [Table of Contents](#table-of-contents)
+  * [Table of Content](#table-of-content)
 - [Overview](#overview)
 - [Connecting](#connecting)
   * [PS-NCentral](#ps-ncentral)
@@ -27,12 +28,13 @@
     + [Update customer property](#update-customer-property)
     + [Add new a new Customer](#add-new-a-new-customer)
 - [Appendix A – N-Central Web Service members](#appendix-a---n-central-web-service-members)
-- [Appendix - B PS-NCentral cmdlets](#appendix---b-ps-ncentral-cmdlets)
+- [Appendix B - PS-NCentral cmdlets](#appendix-b---ps-ncentral-cmdlets)
 - [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
 - [Appendix D – Customer Property variables](#appendix-d---customer-property-variables)
 - [Appendix E - All PS-Central Methods](#appendix-e---all-ps-central-methods)
 - [Appendix F - Common Error Codes](#appendix-f---common-error-codes)
 - [Appendix G - Issue Status](#appendix-g---issue-status)
+- [Appendix H - WebserviceProxy Alternative](#appendix-h---webserviceproxy-alternative)
 - [Credits](#credits)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -374,6 +376,14 @@ $CustomersReport | Out-GridView
 ```
 
 For the complete script see [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
+
+
+
+Note that **WebServiceProxy** is **discontinued** by Microsoft in PowerShell versions after 5.1. You can find alternative code in 
+
+[Appendix H - WebserviceProxy Alternative](#AppendixH-WebserviceProxyAlternative)
+
+
 
 # Updating a Value
 
@@ -896,7 +906,7 @@ This function will return the value for the new Customer ID, you can then use th
 |UseDefaultCredentials | Property |
 |UserAgent | Property |
 
-# Appendix - B PS-NCentral cmdlets
+# Appendix B - PS-NCentral cmdlets
 
 | Command | Synopsis |
 | --- | --- |
@@ -1117,6 +1127,97 @@ The API does not allow combinations of these filters.
 
 - **1-7** are reflected in the **notifstate**-property.
 - **11** and **12** relate to the properties **numberofactivenotification** and **numberofacknowledgednotification**.
+
+
+
+# Appendix H - WebserviceProxy Alternative
+
+
+
+```PowerShell
+## Retrieving data from N-Central by SOAP-API
+
+# Settings
+$Servername = "ServerFQDN"
+$UserName = "API-User-noMFA"    ## Or "" when using JWT
+$Password = "P@ssword"          ## Or JWT (preferred)
+
+# Function for retrieving data without Webserviceproxy.
+# Works for most (but not all!!) Methods in 
+#      https://mothership.n-able.com/dms/javadoc_ei2/com/nable/nobj/ei2/ServerEI2_PortType.html
+# Note: Complex passwords may contain characters that invalidate the SOAP-request.
+Function GetNCData([String]$APIMethod,[String]$Username,[String]$PassOrJWT,$KeyPairs){
+
+    ## Process Keys
+    $MyKeys=""
+    ForEach($KeyPair in $KeyPairs){ 
+        $MyKeys = $MyKeys + ("
+        <ei2:settings>
+            <ei2:key>{0}</ei2:key>
+            <ei2:value>{1}</ei2:value>
+        </ei2:settings>" -f ($KeyPair.Key),($KeyPair.Value))
+    }
+    
+    ## Build SoapRequest (last line must be left-lined for terminating @")
+    $MySoapRequest =(@"
+    <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:ei2="http://ei2.nobj.nable.com/">
+    <soap:Header/>
+    <soap:Body>
+        <ei2:{0}>
+            <ei2:username>{1}</ei2:username>
+            <ei2:password>{2}</ei2:password>{3}
+        </ei2:{0}>
+    </soap:Body>
+    </soap:Envelope>
+"@ -f $APIMethod, $Username, $PassOrJWT, $MyKeys)
+    #Write-Host $MySoapRequest       ## For Debug/Educational purpose
+    
+    ## Request DataSet
+    $FullReponse = $null
+    Try{
+            $FullReponse = Invoke-RestMethod -Uri $BindingURL -body $MySoapRequest -Method POST
+        }
+    Catch{
+            Write-Host ("Could not connect: {0}." -f $_.Exception.Message )
+            exit
+        }
+        
+    ## Process Returned DataSet
+    $ReturnClass = $FullReponse.envelope.body | Get-Member -MemberType Property
+    $ReturnProperty = $ReturnClass[0].Name
+            
+    Return  $FullReponse.envelope.body.$ReturnProperty.return
+}
+# End of Function GetNCData
+
+#Start of Main Script
+# Extract local configuration Info.
+$ApplianceConfig = ("{0}\N-able Technologies\Windows Agent\config\ApplianceConfig.xml" -f ${Env:ProgramFiles(x86)})
+# Get appliance id
+$ApplianceXML = [xml](Get-Content -Path $ApplianceConfig)
+$ApplianceID = $ApplianceXML.ApplianceConfig.ApplianceID
+
+# Prepare Connection
+$BindingURL = ("https://{0}/dms2/services2/ServerEI2?wsdl" -f $ServerName)
+
+## Add one or more keypairs to the array, depending on method parameter needs.
+$KeyPairs = @()
+$KeyPair = [PSObject]@{Key='applianceID'; Value=$ApplianceID;}
+$KeyPairs += $KeyPair
+
+## Pre Powershell 7 : Method using WebserviceProxy
+#$Connection = New-Webserviceproxy $BindingURL
+
+# Get data from N-Central. Old and New line for comparison and easy conversion of existing scripts.
+#$rc = $Connection.deviceGet($UserName, $Password, $KeyPairs)
+$rc = GetNCData 'deviceGet' $UserName $Password $KeyPairs
+
+# Extract the Customer-ID and display.
+$CustomerID = ($rc.info | where-object {$_.key -eq "device.customerid"}).value
+$CustomerID
+```
+
+
 
 
 
