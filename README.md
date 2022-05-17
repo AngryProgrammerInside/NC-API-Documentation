@@ -1098,7 +1098,7 @@ $_ncsession.customervalidation
 
 \#    5000 - Query failed.
 
-\#    5000 - javax.validation.ValidationException: Unable to validate UI session
+\#    5000 - javax.validation.ValidationException: Unable to validate UI session	--> often an expired password, even when using JWT.
 
 \#    9910 - Service Organization already exists.
 
@@ -1106,14 +1106,14 @@ $_ncsession.customervalidation
 
 # Appendix G - Issue Status
 
-These codes can be used with the **-IssueStatus** option of the **Get-NCActiveIssuesList** command. 
+These codes can be used with the **-IssueStatus** option of the **Get-NCActiveIssuesList** command. In v1.3 code 1 and 5 naming was incorrect (swapped)
 
 ```
-1	Failed
+1	No Data
 2	Stale
 3	Normal        --> Nothing returned
 4	Warning
-5	No Data
+5	Failed
 6	Misconfigured
 7	Disconnected
 
