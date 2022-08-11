@@ -26,7 +26,8 @@
     + [Registration token injection](#registration-token-injection)
     + [Gather organization property ID](#gather-organization-property-id)
     + [Update customer property](#update-customer-property)
-    + [Add new a new Customer](#add-new-a-new-customer)
+    + [Add new a new Customer](#add-a-new-customer)
+    + [Add new a new User](#add-a-new-user)
 - [Appendix A – N-Central Web Service members](#appendix-a---n-central-web-service-members)
 - [Appendix B - PS-NCentral cmdlets](#appendix-b---ps-ncentral-cmdlets)
 - [Appendix C – GetAllCustomerProperties.ps1](#appendix-c---getallcustomerpropertiesps1)
@@ -647,7 +648,7 @@ foreach ($Customer in $custData){
     $nws.customerModify("",$JWT,$ModifiedKeyList)
 }
 ```
-### Add new a new Customer
+### Add a new Customer
 
 Not every cmdlet is currently available in PS-NCentral, one such cmdlet that could be useful is the automation of the creation of customer accounts. In the below example we use the ```$nws``` connection from before and pass through a hashtable of some of the customer properties in in [Appendix D – Customer Property variables](#appendix-d---customer-property-variables), note there are two required fields: **customername** and **parentid**
 
@@ -698,7 +699,41 @@ $NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
 ```
 You can also create the customer without attributes and fill them out later if you wish by simply calling `$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
 
-This function will return the value for the new Customer ID, you can then use that Id to perform further automation if needed.
+The CustomerAdd function will return the value for the new Customer ID, you can then use that Id to perform further automation if needed.
+
+### Add a new User
+
+Not every cmdlet is currently available in PS-NCentral, one such cmdlet that could be useful is the automation of the creation of user accounts.
+
+At time of writing with PS-NCentral version 1.6 it is possible to use the CustomerAdd() method as it is exists inside the core class object now. While there is currently no Powershell function to call this, create a customer with it in the following way:
+
+```powershell
+#Connect to NC
+$NCSession = New-NCentralConnection -ServerFQDN n-central.myserver.com -JWT $JWT
+$NewUserAttributes = @{
+    email = "john.doe@contoso.com"
+    customerID = 50
+    password = "ComplexityCompliant"
+    firstname = "John"
+    lastname = "Doe"
+}
+
+$NCSession.UserAdd($NewUserAttributes)
+```
+
+Above are the required attributes only. To see the additional attributes you can type
+
+```powershell
+$NCSession.UserValidation
+```
+
+The UserAdd function will return the value for the new User ID, you can then use that Id to perform further automation if needed.
+
+It will return **-1** when the addition fails. Make sure the email is unique across the system (even if deleted) and the password meets the complexity requirements.
+
+**Note:** It is not possible to change or add information for the user-account after creation.
+
+
 
 # Appendix A – N-Central Web Service members
 
