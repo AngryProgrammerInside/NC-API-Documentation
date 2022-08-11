@@ -697,7 +697,7 @@ $NewCustomerAttributes = @{
 
 $NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
 ```
-As of version 1.6 you can add the required fields (customername, parentid) directly to $NewCustomerAttributes and use this as a single parameter for CustomerAdd, similar to UserAdd as documented below.
+As of version 1.6 you can add the required fields (customername, parentid) directly to $NewCustomerAttributes and use this as a single parameter for CustomerAdd, similar to UserAdd-command as documented below.
 
 You can also create the customer without attributes and fill them out later if you wish by simply calling `$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
 
@@ -746,7 +746,7 @@ The UserAdd function will return the value for the new User ID, you can then use
 
 It will return **-1** when the addition fails. Make sure the email is unique across the system (even if deleted) and the password meets the complexity requirements.
 
-**Note:** It is not possible to change or add information for the user-account after creation.
+**Note:** It is not possible to change or add information for the user-account by API after creation.
 
 
 
