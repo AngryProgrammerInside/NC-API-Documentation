@@ -697,6 +697,8 @@ $NewCustomerAttributes = @{
 
 $NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
 ```
+As of version 1.6 you can add the required fields (customername, parentid) directly to $NewCustomerAttributes and use this as a single parameter for CustomerAdd, similar to UserAdd as documented below.
+
 You can also create the customer without attributes and fill them out later if you wish by simply calling `$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
 
 The CustomerAdd function will return the value for the new Customer ID, you can then use that Id to perform further automation if needed.
@@ -734,7 +736,6 @@ It is also possible to import a csv with multiple accounts, which has the fieldn
 ```powershell
 #Connect to NC
 $NCSession = New-NCentralConnection -ServerFQDN n-central.myserver.com -JWT $JWT
-
 #Import list of accounts
 Import-CSV C:\Temp\AccountsList.csv | $NCSession.UserAdd($_)
 ```
