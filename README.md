@@ -697,7 +697,7 @@ $NewCustomerAttributes = @{
 
 $NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
 ```
-As of version 1.6 you can add the required fields (customername, parentid) directly to $NewCustomerAttributes and use this as a single parameter for CustomerAdd, similar to UserAdd-command as documented below.
+As of version 1.6 you can add the required fields (customername, parentid) directly to $NewCustomerAttributes and use this as a single parameter for CustomerAdd, similar to the UserAdd-command as documented below.
 
 You can also create the customer without attributes and fill them out later if you wish by simply calling `$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
 
