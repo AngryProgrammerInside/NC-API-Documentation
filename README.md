@@ -727,6 +727,20 @@ Above are the required attributes only. To see the additional attributes you can
 $NCSession.UserValidation
 ```
 
+
+
+It is also possible to import a csv with multiple accounts, which has the fieldnames as the columnheader.
+
+```powershell
+#Connect to NC
+$NCSession = New-NCentralConnection -ServerFQDN n-central.myserver.com -JWT $JWT
+
+#Import list of accounts
+Import-CSV C:\Temp\AccountsList.csv | $NCSession.UserAdd($_)
+```
+
+
+
 The UserAdd function will return the value for the new User ID, you can then use that Id to perform further automation if needed.
 
 It will return **-1** when the addition fails. Make sure the email is unique across the system (even if deleted) and the password meets the complexity requirements.
