@@ -697,7 +697,7 @@ $NewCustomerAttributes = @{
 
 $NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
 ```
-As of version 1.6 you can add all fields (inclusding the mandatory customername and parentid) directly to $NewCustomerAttributes and use this as a single parameter for the CustomerAdd() method. 
+As of version 1.6 you can add all fields (including the mandatory customername and parentid) directly to $NewCustomerAttributes and use this as a single parameter for the CustomerAdd() method. 
 
 Similar to the UserAdd-command documented below it is also possible to import a csv with multiple customers, which has the fieldnames as the columnheader. The following command can be used to create a csv with all possible  (standard) headers first.
 
