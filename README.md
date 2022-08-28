@@ -697,9 +697,19 @@ $NewCustomerAttributes = @{
 
 $NCSession.CustomerAdd("NewCustomerName",$ParentId,$NewCustomerAttributes)
 ```
-As of version 1.6 you can add the required fields (customername, parentid) directly to $NewCustomerAttributes and use this as a single parameter for CustomerAdd, similar to the UserAdd-command as documented below.
+As of version 1.6 you can add all fields (inclusding the mandatory customername and parentid) directly to $NewCustomerAttributes and use this as a single parameter for the CustomerAdd() method. 
 
-You can also create the customer without attributes and fill them out later if you wish by simply calling `$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
+Similar to the UserAdd-command documented below it is also possible to import a csv with multiple customers, which has the fieldnames as the columnheader. The following command can be used to create a csv with all possible  (standard) headers first.
+
+```powershell
+$NCSession.CustomerValidation -join "," | set-content .\CustomerTemplate.csv
+```
+
+You can also create the customer without attributes and fill them out later if you wish by simply calling 
+
+```powershell
+$NCSession.CustomerAdd("NewCustomerName",$ParentId)`
+```
 
 The CustomerAdd function will return the value for the new Customer ID, you can then use that Id to perform further automation if needed.
 
@@ -707,7 +717,7 @@ The CustomerAdd function will return the value for the new Customer ID, you can 
 
 Not every cmdlet is currently available in PS-NCentral, one such cmdlet that could be useful is the automation of the creation of user accounts.
 
-At time of writing with PS-NCentral version 1.6 it is possible to use the CustomerAdd() method as it is exists inside the core class object now. While there is currently no Powershell function to call this, create a customer with it in the following way:
+At time of writing with PS-NCentral version 1.6 it is possible to use the CustomerAdd() method as it is exists inside the core class object now. While there is currently no Powershell function to call this, create a user with it in the following way:
 
 ```powershell
 #Connect to NC
@@ -729,9 +739,13 @@ Above are the required attributes only. To see the additional attributes you can
 $NCSession.UserValidation
 ```
 
+It is also possible to import a csv with multiple accounts, which has the fieldnames as the columnheader. The command above can be used to create a csv with all possible headers first.
 
+```powershell
+$_ncsession.UserValidation -join "," | set-content .\UserTemplate.csv
+```
 
-It is also possible to import a csv with multiple accounts, which has the fieldnames as the columnheader.
+After modifying the CSV and saving it as AccountsList.csv you can import 
 
 ```powershell
 #Connect to NC
@@ -1098,17 +1112,15 @@ $_ncsession.customervalidation
 |DevicePropertyID|
 |DevicePropertyList|
 |DevicePropertyModify|
-|Equals|
 |ErrorHandler|
 |GetHashCode|
-|GetType|
 |JobStatusList|
 |OrganizationPropertyID|
 |OrganizationPropertyList|
 |OrganizationPropertyModify|
 |ProcessData1|
 |ProcessData2|
-|ToString|
+|UserAdd|
 |UserRoleGet|
 |UserRoleList|
 
